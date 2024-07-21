@@ -1,23 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+import React, { useState } from 'react';
+import AlgorithmVisualizer from './components/AlgorithmVisualizer';
+import Header from './components/Header';
+import ArrayInput from './components/ArrayInput';
 
 function App() {
+  const [array, setArray] = useState([]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Header />
+      <ArrayInput setArray={setArray} />
+      <AlgorithmVisualizer array={array} setArray={setArray} />
     </div>
   );
 }
