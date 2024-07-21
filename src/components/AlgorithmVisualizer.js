@@ -1,46 +1,55 @@
 // src/components/AlgorithmVisualizer.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { animated } from '@react-spring/web';
+import useBarStyles from '../hooks/useBarStyle';
 
 function AlgorithmVisualizer({ array, setArray }) {
   const [algorithm, setAlgorithm] = useState('');
   const [comparingIndices, setComparingIndices] = useState([]);
   const [sortedIndices, setSortedIndices] = useState([]);
+  const [step, setStep] = useState(0);
+  const [steps, setSteps] = useState([]);
 
-  const visualizeArray = () => {
-    return (
-      <div id="visualization">
-        {array.map((value, index) => (
-          <div
-            key={index}
-            className={`bar ${comparingIndices.includes(index) ? 'comparing' : sortedIndices.includes(index) ? 'sorted' : 'default'}`}
-            style={{ height: `${value * 10}px` }}
-          >
-            <div className="bar-label">{value}</div>
-          </div>
-        ))}
-      </div>
-    );
+  // Create steps for animation
+  const createSteps = async (array) => {
+    const steps = [];
+    await mergeSort(array, 0, array.length - 1, steps);
+    setSteps(steps);
   };
 
-  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  useEffect(() => {
+    if (steps.length > 0) {
+      const interval = setInterval(() => {
+        if (step < steps.length) {
+          setComparingIndices(steps[step].comparing);
+          setSortedIndices(steps[step].sorted);
+          setArray([...steps[step].array]);
+          setStep(prev => prev + 1);
+        } else {
+          clearInterval(interval);
+        }
+      }, 500); // Adjust the delay for animation speed
+      return () => clearInterval(interval);
+    }
+  }, [step, steps, array, setArray]);
 
-  const mergeSort = async (array, left = 0, right = array.length - 1) => {
+  const mergeSort = async (array, left, right, steps) => {
     if (left >= right) return;
 
     const middle = Math.floor((left + right) / 2);
-    await mergeSort(array, left, middle);
-    await mergeSort(array, middle + 1, right);
-    await merge(array, left, middle, right);
+    await mergeSort(array, left, middle, steps);
+    await mergeSort(array, middle + 1, right, steps);
+    await merge(array, left, middle, right, steps);
   };
 
-  const merge = async (array, left, middle, right) => {
+  const merge = async (array, left, middle, right, steps) => {
     const leftArray = array.slice(left, middle + 1);
     const rightArray = array.slice(middle + 1, right + 1);
     let leftIndex = 0, rightIndex = 0, currentIndex = left;
     const newSortedIndices = [];
-    
+
     while (leftIndex < leftArray.length && rightIndex < rightArray.length) {
-      setComparingIndices([currentIndex, left + leftIndex + rightArray.length]);
+      const comparingIndices = [currentIndex];
       if (leftArray[leftIndex] <= rightArray[rightIndex]) {
         array[currentIndex] = leftArray[leftIndex];
         leftIndex++;
@@ -50,68 +59,49 @@ function AlgorithmVisualizer({ array, setArray }) {
       }
       currentIndex++;
       newSortedIndices.push(currentIndex);
-      setArray([...array]);
-      await sleep(500); // Adjust the delay for better visualization
+      steps.push({ array: [...array], comparing: comparingIndices, sorted: newSortedIndices });
     }
 
     while (leftIndex < leftArray.length) {
-      setComparingIndices([currentIndex]);
+      const comparingIndices = [currentIndex];
       array[currentIndex] = leftArray[leftIndex];
       leftIndex++;
       currentIndex++;
       newSortedIndices.push(currentIndex);
-      setArray([...array]);
-      await sleep(500); // Adjust the delay for better visualization
+      steps.push({ array: [...array], comparing: comparingIndices, sorted: newSortedIndices });
     }
 
     while (rightIndex < rightArray.length) {
-      setComparingIndices([currentIndex]);
+      const comparingIndices = [currentIndex];
       array[currentIndex] = rightArray[rightIndex];
       rightIndex++;
       currentIndex++;
       newSortedIndices.push(currentIndex);
-      setArray([...array]);
-      await sleep(500); // Adjust the delay for better visualization
-    }
-
-    setSortedIndices([...newSortedIndices]);
-  };
-
-  const quickSort = async (array, low = 0, high = array.length - 1) => {
-    if (low < high) {
-      const pi = await partition(array, low, high);
-      await quickSort(array, low, pi - 1);
-      await quickSort(array, pi + 1, high);
+      steps.push({ array: [...array], comparing: comparingIndices, sorted: newSortedIndices });
     }
   };
 
-  const partition = async (array, low, high) => {
-    const pivot = array[high];
-    let i = low - 1;
-    const newComparingIndices = [];
-    for (let j = low; j < high; j++) {
-      setComparingIndices([i + 1, j]);
-      if (array[j] <= pivot) {
-        i++;
-        [array[i], array[j]] = [array[j], array[i]];
-        setArray([...array]);
-        await sleep(500); // Adjust the delay for better visualization
-      }
-    }
-    [array[i + 1], array[high]] = [array[high], array[i + 1]];
-    setArray([...array]);
-    await sleep(500); // Adjust the delay for better visualization
-    return i + 1;
-  };
+  // Get animated styles
+  const barStyles = useBarStyles(array, comparingIndices, sortedIndices);
 
   return (
     <div>
       <h2>Currently Visualizing: {algorithm}</h2>
       <div>
-        <button onClick={() => { setAlgorithm('Merge Sort'); mergeSort([...array]); }}>Merge Sort</button>
-        <button onClick={() => { setAlgorithm('Quick Sort'); quickSort([...array]); }}>Quick Sort</button>
+        <button onClick={() => { setAlgorithm('Merge Sort'); createSteps([...array]); setStep(0); }}>Merge Sort</button>
+        <button onClick={() => { setAlgorithm('Quick Sort'); /* Implement Quick Sort steps here */ }}>Quick Sort</button>
       </div>
-      {visualizeArray()}
+      <div id="visualization">
+        {array.map((value, index) => (
+          <animated.div
+            key={index}
+            className="bar"
+            style={barStyles[index]}
+          >
+            <div className="bar-label">{value}</div>
+          </animated.div>
+        ))}
+      </div>
     </div>
   );
 }
