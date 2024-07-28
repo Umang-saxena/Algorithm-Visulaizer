@@ -19,8 +19,9 @@ function ArrayInput({ setArray }) {
         type="text" 
         value={input} 
         onChange={handleChange} 
-        placeholder="Enter array elements separated by commas" 
+        placeholder="Enter array elements separated by commas"
       />
+      
       <button onClick={handleVisualize}>Visualize</button>
     </div>
   );

@@ -28,7 +28,7 @@ function AlgorithmVisualizer({ array, setArray }) {
         } else {
           clearInterval(interval);
         }
-      }, 500); // Adjust the delay for animation speed
+      }, 1000); // Slow down the animation speed
       return () => clearInterval(interval);
     }
   }, [step, steps, array, setArray]);
@@ -91,16 +91,18 @@ function AlgorithmVisualizer({ array, setArray }) {
         <button onClick={() => { setAlgorithm('Merge Sort'); createSteps([...array]); setStep(0); }}>Merge Sort</button>
         <button onClick={() => { setAlgorithm('Quick Sort'); /* Implement Quick Sort steps here */ }}>Quick Sort</button>
       </div>
-      <div id="visualization">
-        {array.map((value, index) => (
-          <animated.div
-            key={index}
-            className="bar"
-            style={barStyles[index]}
-          >
-            <div className="bar-label">{value}</div>
-          </animated.div>
-        ))}
+      <div id="visualization-container">
+        <div id="visualization">
+          {array.map((value, index) => (
+            <animated.div
+              key={index}
+              className={`bar ${comparingIndices.includes(index) ? 'comparing' : ''} ${sortedIndices.includes(index) ? 'sorted' : ''}`}
+              style={{ ...barStyles[index], height: `${value * 3}px` }} // Adjust height scaling as needed
+            >
+              <div className="bar-label">{value}</div>
+            </animated.div>
+          ))}
+        </div>
       </div>
     </div>
   );
