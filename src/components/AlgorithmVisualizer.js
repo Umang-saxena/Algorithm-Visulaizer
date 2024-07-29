@@ -13,7 +13,11 @@ function AlgorithmVisualizer({ array, setArray }) {
   // Create steps for animation
   const createSteps = async (array) => {
     const steps = [];
-    await mergeSort(array, 0, array.length - 1, steps);
+    if (algorithm === 'Merge Sort') {
+      await mergeSort(array, 0, array.length - 1, steps);
+    } else if (algorithm === 'Quick Sort') {
+      await quickSort(array, 0, array.length - 1, steps);
+    }
     setSteps(steps);
   };
 
@@ -81,6 +85,30 @@ function AlgorithmVisualizer({ array, setArray }) {
     }
   };
 
+  const quickSort = async (array, low, high, steps) => {
+    if (low < high) {
+      const pi = await partition(array, low, high, steps);
+      await quickSort(array, low, pi - 1, steps);
+      await quickSort(array, pi + 1, high, steps);
+    }
+  };
+
+  const partition = async (array, low, high, steps) => {
+    const pivot = array[high];
+    let i = low - 1;
+    for (let j = low; j < high; j++) {
+      const comparingIndices = [j, high];
+      if (array[j] < pivot) {
+        i++;
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      steps.push({ array: [...array], comparing: comparingIndices, sorted: [] });
+    }
+    [array[i + 1], array[high]] = [array[high], array[i + 1]];
+    steps.push({ array: [...array], comparing: [i + 1, high], sorted: [] });
+    return i + 1;
+  };
+
   // Get animated styles
   const barStyles = useBarStyles(array, comparingIndices, sortedIndices);
 
@@ -89,7 +117,7 @@ function AlgorithmVisualizer({ array, setArray }) {
       <h2>Currently Visualizing: {algorithm}</h2>
       <div>
         <button onClick={() => { setAlgorithm('Merge Sort'); createSteps([...array]); setStep(0); }}>Merge Sort</button>
-        <button onClick={() => { setAlgorithm('Quick Sort'); /* Implement Quick Sort steps here */ }}>Quick Sort</button>
+        <button onClick={() => { setAlgorithm('Quick Sort'); createSteps([...array]); setStep(0); }}>Quick Sort</button>
       </div>
       <div id="visualization-container">
         <div id="visualization">
